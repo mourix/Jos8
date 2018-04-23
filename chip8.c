@@ -14,6 +14,7 @@ Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
 
 // defines
 #define DEBUG
+unsigned char cowgod = 1; // enable Cowgod's 8XY6/8XYE syntax
 
 // global variables
 unsigned char memory[4096]; // program memory
@@ -261,9 +262,17 @@ int chip8_cycle(void)
 				// 8XY6 	BitOp 	Vx=Vy=Vy>>1 	Shifts VY right by one and copies the result to VX. 
 				// VF is set to the value of the least significant bit of VY before the shift.
 				case 0x0006:
-					V[0xF] = V[(opcode & 0x00F0) >> 4] & 1;
-					V[(opcode & 0x00F0) >> 4] = V[(opcode & 0x00F0) >> 4] >> 1;
-					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+					if(cowgod)
+					{
+						V[0xF] = V[(opcode & 0x0F00) >> 8] & 1;
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] >> 1;
+					}
+					else
+					{
+						V[0xF] = V[(opcode & 0x00F0) >> 4] & 1;
+						V[(opcode & 0x00F0) >> 4] = V[(opcode & 0x00F0) >> 4] >> 1;
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+					}
 					pc += 2;
 					#ifdef DEBUG
 					printf ("Opcode 0x%X: 8XY6 Vx=Vy=Vy>>1\n", opcode);
@@ -285,9 +294,17 @@ int chip8_cycle(void)
 				// 8XYE 	BitOp 	Vx=Vy=Vy<<1 	Shifts VY left by one and copies the result to VX. 
 				// VF is set to the value of the most significant bit of VY before the shift.
 				case 0x000E:
-					V[0xF] = (V[(opcode & 0x00F0) >> 4] & 128) >> 7;
-					V[(opcode & 0x00F0) >> 4] = V[(opcode & 0x00F0) >> 4] << 1;	
-					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];				
+					if(cowgod)
+					{
+						V[0xF]  = (V[(opcode & 0x0F00) >> 8] & 128) >> 7;
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] << 1;
+					}
+					else
+					{
+						V[0xF] = (V[(opcode & 0x00F0) >> 4] & 128) >> 7;
+						V[(opcode & 0x00F0) >> 4] = V[(opcode & 0x00F0) >> 4] << 1;	
+						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+					}
 					pc += 2;
 					#ifdef DEBUG
 					printf ("Opcode 0x%X: 8XYE Vx=Vy=Vy<<1\n", opcode);
@@ -510,7 +527,7 @@ int chip8_cycle(void)
 	// update sound timer
 	if (sound_timer && (timercount == 7))
 	{
-		if (sound_timer == 1) printf("Beep...\n\a");
+		if (sound_timer == 1) printf("Beep...\n\a"); // plays OS beep
 		sound_timer--;
 	}
 	
