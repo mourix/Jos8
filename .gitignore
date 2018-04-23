@@ -1,3 +1,8 @@
+# extentionless files
+*
+!*.*
+!*/
+
 # Prerequisites
 *.d
 
@@ -50,3 +55,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# DEVCPP files
+*.dev
+*.layout
+*.win
