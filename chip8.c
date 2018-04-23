@@ -12,8 +12,8 @@ Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
 #include <string.h>
 #include "chip8.h"
 
-// defines
-#define DEBUG
+// settings
+unsigned char debug = 1; // enable debug prints for every opcode
 unsigned char cowgod = 1; // enable Cowgod's 8XY6/8XYE syntax
 
 // global variables
@@ -114,18 +114,14 @@ int chip8_cycle(void)
 					memset(screen, 0, sizeof(screen[0][0])*64*32);
 					pc += 2;
 					drawflag = 1; // update screen
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 00E0 disp_clear\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 00E0 disp_clear\n", opcode);
 					break;
 				
 				// 00EE 	Flow 	return; 	Returns from a subroutine.
 				case 0x000E:
 					sp--;
 					pc = stack[sp];
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 00EE return\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 00EE return\n", opcode);
 					break;
 					
 				default:
@@ -136,9 +132,7 @@ int chip8_cycle(void)
 		// 1NNN 	Flow 	goto NNN; 	Jumps to address NNN.
 		case 0x1000:
 			pc = opcode & 0x0FFF;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 1NNN goto NNN\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 1NNN goto NNN\n", opcode);
 			break;
 			
 		// 2NNN 	Flow 	*(0xNNN)() 	Calls subroutine at NNN.	
@@ -146,54 +140,42 @@ int chip8_cycle(void)
 			stack[sp] = pc + 2;
 			sp++;
 			pc = opcode & 0x0FFF;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 2NNN Call subroutine NNN\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 2NNN Call subroutine NNN\n", opcode);
 			break;
 			
 		// 3XNN 	Cond 	if(Vx==NN) 	Skips the next instruction if VX equals NN. 	
 		case 0x3000:
 			if(V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)) pc += 4;
 			else pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 3XNN skip if(Vx==NN)\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 3XNN skip if(Vx==NN)\n", opcode);
 			break;
 				
 		// 4XNN 	Cond 	if(Vx!=NN) 	Skips the next instruction if VX doesn't equal NN. 	
 		case 0x4000:
 			if(V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) pc += 4;
 			else pc += 2;		
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 4XNN skip if(Vx!=NN)\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 4XNN skip if(Vx!=NN)\n", opcode);
 			break;
 			
 		// 5XY0 	Cond 	if(Vx==Vy) 	Skips the next instruction if VX equals VY. 
 		case 0x5000:
 			if(V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4]) pc += 4;
 			else pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 5XY0 skip if(Vx==Vy)\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 5XY0 skip if(Vx==Vy)\n", opcode);
 			break;
 			
 		// 6XNN 	Const 	Vx = NN 	Sets VX to NN.	
 		case 0x6000:
 			V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
 			pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 6XNN Vx = NN \n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 6XNN Vx = NN \n", opcode);
 			break;
 			
 		// 7XNN 	Const 	Vx += NN 	Adds NN to VX. (Carry flag is not changed)
 		case 0x7000:
 			V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] + (opcode & 0x00FF);
 			pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 7XNN Vx += NN\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 7XNN Vx += NN\n", opcode);
 			break;
 			
 		case 0x8000:
@@ -203,36 +185,28 @@ int chip8_cycle(void)
 				case 0x0000:
 					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY0 Vx=Vy\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY0 Vx=Vy\n", opcode);
 					break;
 					
 				// 8XY1 	BitOp 	Vx=Vx|Vy 	Sets VX to VX or VY. (Bitwise OR operation)
 				case 0x0001:
 					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY1 Vx|Vy\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY1 Vx|Vy\n", opcode);
 					break;
 					
 				// 8XY2 	BitOp 	Vx=Vx&Vy 	Sets VX to VX and VY. (Bitwise AND operation)
 				case 0x0002:
 					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY2 Vx=Vx&Vy\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY2 Vx=Vx&Vy\n", opcode);
 					break;
 					
 				// 8XY3 	BitOp 	Vx=Vx^Vy 	Sets VX to VX xor VY.
 				case 0x0003:
 					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] ^ V[(opcode & 0x00F0) >> 4];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY3 Vx=Vx^Vy\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY3 Vx=Vx^Vy\n", opcode);
 					break;
 
 				// 8XY4 	Math 	Vx += Vy 	Adds VY to VX. 
@@ -242,9 +216,7 @@ int chip8_cycle(void)
 					else V[0xF] = 0;
 					V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY4 Vx += Vy\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY4 Vx += Vy\n", opcode);
 					break;
 					
 				// 8XY5 	Math 	Vx -= Vy 	VY is subtracted from VX. 
@@ -254,9 +226,7 @@ int chip8_cycle(void)
 					else V[0xF] = 1;
 					V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY5 Vx -= Vy\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY5 Vx -= Vy\n", opcode);
 					break;
 					
 				// 8XY6 	BitOp 	Vx=Vy=Vy>>1 	Shifts VY right by one and copies the result to VX. 
@@ -274,9 +244,7 @@ int chip8_cycle(void)
 						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
 					}
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY6 Vx=Vy=Vy>>1\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY6 Vx=Vy=Vy>>1\n", opcode);
 					break;
 					
 				// 8XY7 	Math 	Vx=Vy-Vx 	Sets VX to VY minus VX. 
@@ -286,9 +254,7 @@ int chip8_cycle(void)
 					else V[0xF] = 1;
 					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XY7 Vx=Vy-Vx\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XY7 Vx=Vy-Vx\n", opcode);
 					break;
 					
 				// 8XYE 	BitOp 	Vx=Vy=Vy<<1 	Shifts VY left by one and copies the result to VX. 
@@ -306,9 +272,7 @@ int chip8_cycle(void)
 						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
 					}
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: 8XYE Vx=Vy=Vy<<1\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: 8XYE Vx=Vy=Vy<<1\n", opcode);
 					break;
 	
 				default:
@@ -321,26 +285,20 @@ int chip8_cycle(void)
 		case 0x9000:
 			if(V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4]) pc += 4;
 			else pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: 9XY0 skip if(Vx!=Vy)\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: 9XY0 skip if(Vx!=Vy)\n", opcode);
 			break;
 			
 		// 	ANNN 	MEM 	I = NNN 	Sets I to the address NNN.
 		case 0xA000:
 			I = opcode & 0x0FFF;
 			pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: ANNN I = NNN\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: ANNN I = NNN\n", opcode);
 			break;
 			
 		// BNNN 	Flow 	PC=V0+NNN 	Jumps to the address NNN plus V0.
 		case 0xB000:
 			pc = (opcode & 0x0FFF) + V[0];
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: BNNN PC=V0+NNN\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: BNNN PC=V0+NNN\n", opcode);
 			break;
 			
 		// 	CXNN 	Rand 	Vx=rand()&NN 	
@@ -348,9 +306,7 @@ int chip8_cycle(void)
 		case 0xC000:
 			V[(opcode & 0x0F00) >> 8] = (rand() % 256) & (opcode & 0x00FF);
 			pc += 2;
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: CXNN Vx=rand()&NN\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: CXNN Vx=rand()&NN\n", opcode);
 			break;	
 			
 		// 	DXYN 	Disp 	draw(Vx,Vy,N) 	
@@ -378,9 +334,7 @@ int chip8_cycle(void)
 			
 			pc += 2;
 			drawflag = 1; // update screen
-			#ifdef DEBUG
-			printf ("Opcode 0x%X: DXYN draw(Vx,Vy,N)\n", opcode);
-			#endif
+			if(debug) printf("Opcode 0x%X: DXYN draw(Vx,Vy,N)\n", opcode);
 			break;
 			
 		case 0xE000:
@@ -390,18 +344,14 @@ int chip8_cycle(void)
 				case 0x000E:
 					if(key[V[(opcode & 0x0F00) >> 8]]) pc += 4;
 					else pc += 2;					
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: EX9E if(key()==Vx)\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: EX9E if(key()==Vx)\n", opcode);
 					break;
 				
 				// EXA1 	KeyOp 	if(key()!=Vx) 	Skips the next instruction if the key stored in VX isn't pressed. 
 				case 0x0001:
 					if(!key[V[(opcode & 0x0F00) >> 8]]) pc += 4;
 					else pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: EXA1 if(key()!=Vx)\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: EXA1 if(key()!=Vx)\n", opcode);
 					break;
 				
 				default:
@@ -416,9 +366,7 @@ int chip8_cycle(void)
 				case 0x0007:
 					V[(opcode & 0x0F00) >> 8] = delay_timer;
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX07 Vx = get_delay()\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX07 Vx = get_delay()\n", opcode);
 					break;
 					
 				// FX0A 	KeyOp 	Vx = get_key() 	A key press is awaited, and then stored in VX. 
@@ -432,45 +380,35 @@ int chip8_cycle(void)
 							pc += 2;
 						}
 					}
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX0A\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX0A\n", opcode);
 					break;	
 								
 				// FX15 	Timer 	delay_timer(Vx) 	Sets the delay timer to VX.
 				case 0x0015:
 					delay_timer = V[(opcode & 0x0F00) >> 8];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX15 delay_timer(Vx)\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX15 delay_timer(Vx)\n", opcode);
 					break;		
 							
 				// FX18 	Sound 	sound_timer(Vx) 	Sets the sound timer to VX.
 				case 0x0018:
 					sound_timer = V[(opcode & 0x0F00) >> 8];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX18 sound_timer(Vx)\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX18 sound_timer(Vx)\n", opcode);
 					break;
 					
 				// FX1E 	MEM 	I +=Vx 	Adds VX to I.[3]
 				case 0x001E:
 					I += V[(opcode & 0x0F00) >> 8];
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX1E I +=Vx\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX1E I +=Vx\n", opcode);
 					break;	
 								
 				// FX29 	MEM 	I=sprite_addr[Vx] 	Sets I to the location of the sprite for the character in VX. 
 				case 0x0029:
 					I = 0x50 + (V[(opcode & 0x0F00) >> 8] * 5);
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX29 I=sprite_addr[Vx] \n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX29 I=sprite_addr[Vx] \n", opcode);
 					break;	
 					
 				// FX33 	BCD 	set_BCD(Vx); Stores the binary-coded decimal representation of VX
@@ -479,9 +417,7 @@ int chip8_cycle(void)
 					memory[I+1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
 					memory[I+2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX33 set_BCD(Vx);\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX33 set_BCD(Vx);\n", opcode);
 					break;
 					
 				// FX55 	MEM 	reg_dump(Vx,&I) 	Stores V0 to VX (including VX) in memory starting at address I. 
@@ -493,9 +429,7 @@ int chip8_cycle(void)
 						I++;
 					}
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX55 reg_dump(Vx,&I)\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX55 reg_dump(Vx,&I)\n", opcode);
 					break;	
 								
 				// FX65 	MEM 	reg_load(Vx,&I) 	Fills V0 to VX (including VX) with values from memory starting at address I. 
@@ -507,9 +441,7 @@ int chip8_cycle(void)
 						I++;
 					}						
 					pc += 2;
-					#ifdef DEBUG
-					printf ("Opcode 0x%X: FX65 reg_load(Vx,&I)\n", opcode);
-					#endif
+					if(debug) printf("Opcode 0x%X: FX65 reg_load(Vx,&I)\n", opcode);
 					break;	
 								
 				default:
