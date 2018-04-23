@@ -43,7 +43,12 @@ void debug_gxf(void)
 int main(int argc, char *argv[]) 
 {
 	chip8_init();
-	chip8_load("INVADERS");
+	
+	// running state
+    unsigned char running = 1;
+    
+    // load ROM if file exists
+	if (chip8_load("INVADERS")) running = 0;
 	
     // initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
@@ -63,13 +68,10 @@ int main(int argc, char *argv[])
 
 	// SDL even union
     SDL_Event event;
-    
-    // running state
-    unsigned char running = 1;
 
     while(running)
     {
-		// Process events
+		// process events
         while(SDL_PollEvent(&event))
         {
             if(event.type == SDL_QUIT)

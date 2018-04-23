@@ -60,7 +60,7 @@ void chip8_init(void)
 }
 
 // load rom file into memory
-void chip8_load(char* rom)
+int chip8_load(char* rom)
 {
 	// open file
 	FILE * fp = fopen(rom, "rb");
@@ -68,8 +68,8 @@ void chip8_load(char* rom)
 	// check if file exists
 	if(fp == NULL)
 	{
-		printf("ERROR opening file %s\n", rom);
-		return;
+		printf("ERROR opening %s\n", rom);
+		return 1;
 	}
 	
 	// get file size
@@ -90,6 +90,7 @@ void chip8_load(char* rom)
 	// close file and free buffer
 	fclose(fp);
 	free(buffer);
+	return 0;
 }
 
 // emulate a single cpu cycle

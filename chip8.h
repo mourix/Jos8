@@ -35,7 +35,7 @@ static const unsigned char chip8_fontset[80] =
 void chip8_init(void);
 
 // load rom file into memory
-void chip8_load(char* rom);
+int chip8_load(char* rom);
 
 // emulate a single cpu cycle
 int chip8_cycle(void);
