@@ -15,7 +15,10 @@ Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
 // defines
 #define SCALE 10
 
-// SDL snancode to CHIP-8 keycode
+// SDL variables
+SDL_Renderer *renderer;
+
+// SDL snancode to CHIP-8 keycode conversion
 const int keytype[16] = 
 {
 	SDL_SCANCODE_X, SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3, 
@@ -24,7 +27,7 @@ const int keytype[16] =
 	SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_F, SDL_SCANCODE_V
 };
 
-// put graphics on command line				
+// DEBUG: put graphics on command line				
 void debug_gxf(void)
 {
 	for(int y = 0; y < 32; y++)
@@ -37,6 +40,28 @@ void debug_gxf(void)
 		printf("\n");
 	}
 	system("cls");
+}
+
+// render a full frame to SDL
+void render_frame(SDL_Renderer *renderer)
+{
+	for(int y = 0; y < 32; y++)
+	{			
+		for(int x = 0; x < 64; x++)
+		{
+			if(screen[x][y]) // white pixel
+			{
+				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+				SDL_RenderDrawPoint(renderer, x, y);
+			}
+			else // black pixel
+			{
+				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+				SDL_RenderDrawPoint(renderer, x, y);
+			}
+		}					
+	}
+	SDL_RenderPresent(renderer); // update screen
 }
 
 // main emulator loop
@@ -54,7 +79,7 @@ int main(int argc, char *argv[])
 			running = 1;
 		}
 	}
-	else printf("ERROR no file argument specified");
+	else printf("Usage: Jos8 [romname]");
 	
     // initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
@@ -77,43 +102,17 @@ int main(int argc, char *argv[])
 
     while(running)
     {
-		// process events
-        while(SDL_PollEvent(&event))
-        {
-            if(event.type == SDL_QUIT)
-            {
-                running = 0;
-            }
-        }
+		// process quit event
+        while(SDL_PollEvent(&event)) if(event.type == SDL_QUIT) running = 0;
         
         // read keys into array
-        for(int k = 0; k < 16; k++)
-        {
-        	key[k] = state[keytype[k]];
-		}
+        for(int k = 0; k < 16; k++) key[k] = state[keytype[k]];
         
         // run cpu cycle and draw if screen flag is set
-		if(chip8_cycle() == 1)
-		{
-			for(int y = 0; y < 32; y++)
-			{			
-				for(int x = 0; x < 64; x++)
-				{
-					if(screen[x][y]) // white pixel
-					{
-						SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-						SDL_RenderDrawPoint(renderer, x, y);
-					}
-					else // black pixel
-					{
-						SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-						SDL_RenderDrawPoint(renderer, x, y);
-					}
-				}					
-			}
-			SDL_RenderPresent(renderer); // update screen
-		}
-		SDL_Delay(2); // 500hz
+		if(chip8_cycle() == 1) render_frame(renderer);
+		
+		// 500hz
+		SDL_Delay(2); 
 	}
 
 	// release SDL
