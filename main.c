@@ -42,13 +42,19 @@ void debug_gxf(void)
 // main emulator loop
 int main(int argc, char *argv[]) 
 {
-	chip8_init();
-	
 	// running state
-    unsigned char running = 1;
+    unsigned char running = 0;
     
-    // load ROM if file exists
-	if (chip8_load("INVADERS")) running = 0;
+    // load ROM if file argument exists
+	if(argc == 2) 
+	{
+		chip8_init();
+		if(!chip8_load(argv[1])) // don't run if file can't be openened
+		{
+			running = 1;
+		}
+	}
+	else printf("ERROR no file argument specified");
 	
     // initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
