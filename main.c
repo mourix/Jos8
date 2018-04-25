@@ -74,8 +74,9 @@ int main(int argc, char *argv[])
 	// run emulator
     while(running)
     {
-		// process SDL quit button
+		// process SDL quit button and escape key
         while(SDL_PollEvent(&event)) if(event.type == SDL_QUIT) running = 0;
+        if(state[SDL_SCANCODE_ESCAPE]) running = 0;
         
         // process keyboard input
         for(int k = 0; k < 16; k++) key[k] = state[keyconvert[k]];
