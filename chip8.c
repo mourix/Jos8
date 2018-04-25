@@ -28,6 +28,7 @@ unsigned char delay_timer; // delay timer
 unsigned char sound_timer; // sound timer
 unsigned char screen[64][32];// screen
 unsigned char key[16]; // input
+unsigned char keyflag; // flag for input update used in FX0A
 unsigned char drawflag; // flag for screen update
 unsigned char timercount; // counter for timer clock devide
 
@@ -37,6 +38,9 @@ void chip8_init(void)
 	// clear screen
 	memset(screen, 0, sizeof(screen[0][0])*64*32);
 	
+	// clear input flag
+	keyflag = 16;
+	
 	// clear memory, registers and stack
 	pc = 0x200;
 	memset(V, 0, sizeof(V));
@@ -45,12 +49,9 @@ void chip8_init(void)
 	sp = 0;
 	opcode = 0;
 	memset(memory, 0, sizeof(memory));
-
+	
 	// load fontset
-	for(int i = 0; i < 80; i++)
-	{
-		memory[i+0x50] = chip8_fontset[i];
-	}
+	for(int i = 0; i < 80; i++)	memory[i+0x50] = chip8_fontset[i];
 	
 	// reset timers 
 	delay_timer = 0;
@@ -372,13 +373,18 @@ int chip8_cycle(void)
 				// FX0A 	KeyOp 	Vx = get_key() 	A key press is awaited, and then stored in VX. 
 				// (Blocking Operation. All instruction halted until next key event)
 				case 0x000A:
-					for(int i = 0; i < 15; i++)
+					for(int i = 0; i < 16; i++) // read input if no key was pressed last time
 					{
-						if(key[i] == 1)
+						if(key[i] && keyflag == 16)
 						{
-							V[(opcode & 0x0F00) >> 8] = i;
-							pc += 2;
+							keyflag = i;
 						}
+					}
+					if(!key[keyflag] && keyflag != 16) // continue if key was released
+					{
+						V[(opcode & 0x0F00) >> 8] = keyflag;
+						keyflag = 16;
+						pc += 2;
 					}
 					if(debug) printf("Opcode 0x%X: FX0A\n", opcode);
 					break;	
