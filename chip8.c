@@ -335,8 +335,11 @@ int chip8_cycle(void)
 				spritebyte = memory[I+y];
 				for(int x = 0; x < 8; x++)
 				{
-						if(screen[(x+xs) % 64][(y+ys) % 32] && (spritebyte & (0x80 >> x)) >> (7 - x)) V[0xF] = 1; // collision detect
-						screen[(x+xs) % 64][(y+ys) % 32] ^= (spritebyte & (0x80 >> x)) >> (7 - x); // draw pixel
+					if((spritebyte & (0x80 >> x)) >> (7 - x))
+					{
+						if(screen[(x+xs) % 64][(y+ys) % 32]) V[0xF] = 1; // collision detect
+						screen[(x+xs) % 64][(y+ys) % 32] ^= 1; // draw pixel
+					}	
 				}
 			}
 			
