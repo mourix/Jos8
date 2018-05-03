@@ -8,6 +8,7 @@ Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
 
 // includes
 #include <stdio.h>
+#include <stdbool.h>
 #include "chip8.h"
 #include "SDL2/SDL.h"
 
@@ -48,7 +49,9 @@ void render_frame(SDL_Renderer *renderer)
 // main emulator loop
 int main(int argc, char *argv[]) 
 {
-    unsigned char running = 0; // running state
+    bool running = false; // running state
+    bool paused = false; // pause state
+    bool debug = false; // debug state
     
     // load ROM if file argument exists
 	if(argc == 2) 
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
 		chip8_init();
 		if(!chip8_load(argv[1])) // don't run if file can't be openened
 		{
-			running = 1;
+			running = true;
 		}
 	}
 	else printf("Usage: Jos8 [romname]");
@@ -75,14 +78,25 @@ int main(int argc, char *argv[])
     while(running)
     {
 		// process SDL quit button and escape key
-        while(SDL_PollEvent(&event)) if(event.type == SDL_QUIT) running = 0;
-        if(state[SDL_SCANCODE_ESCAPE]) running = 0;
+        while(SDL_PollEvent(&event)) 
+		if(event.type == SDL_QUIT) running = false;
+		
+		// check keyboard input
+		else if(event.type == SDL_KEYDOWN) 
+		{
+			if(state[SDL_SCANCODE_ESCAPE]) running = false; // quit
+	        else if(state[SDL_SCANCODE_P]) paused ^= true; // pause
+	        else if(state[SDL_SCANCODE_O]) debug ^= true; // debug prints
+		}
+    	
+    	// dont emulate while paused
+        if(paused) continue; 
         
         // process keyboard input
         for(int k = 0; k < 16; k++) key[k] = state[keyconvert[k]];
         
         // run 8 cpu cycles
-        for(int i = 0; i < 8; i++) chip8_cycle();
+        for(int i = 0; i < 8; i++) chip8_cycle(debug);
         
         // update timer
     	chip8_timerupdate();

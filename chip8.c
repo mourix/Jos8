@@ -13,7 +13,6 @@ Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
 #include "chip8.h"
 
 // settings
-unsigned char debug = 1; // enable debug prints for every opcode
 unsigned char cowgod_shift = 1; // enable Cowgod's 8XY6/8XYE syntax
 unsigned char cowgod_loadstore = 1; // enable Cowgod's FX55/FX65 syntax
 
@@ -30,7 +29,6 @@ unsigned char sound_timer; // sound timer
 unsigned char screen[64][32];// screen
 unsigned char key[16]; // input
 unsigned char keyflag; // flag for input update used in FX0A
-unsigned char drawflag; // flag for screen update
 
 // initialize all memory and registers
 void chip8_init(void)
@@ -95,7 +93,7 @@ int chip8_load(char* rom)
 }
 
 // emulate a single cpu cycle
-int chip8_cycle(void)
+int chip8_cycle(unsigned char debug)
 {
 	// print all registers if debug is enabled
 	if(debug)
@@ -106,8 +104,6 @@ int chip8_cycle(void)
 		for(int i = 0; i < 15; i++) printf("%02X ", V[i]);
 		printf("%02X]\n", V[15]);
 	}
-	// flag for screen update
-	drawflag = 0;
 	
 	// fetch opcode
 	opcode = memory[pc] << 8 | memory[pc + 1];
@@ -123,7 +119,7 @@ int chip8_cycle(void)
 					if(debug) printf("Opcode=0x%04X: 00E0 disp_clear\n", opcode);
 					memset(screen, 0, sizeof(screen[0][0])*64*32);
 					pc += 2;
-					drawflag = 1; // update screen
+					return 1; // screen update flag
 					break;
 				
 				// 00EE 	Flow 	return; 	Returns from a subroutine.
@@ -343,7 +339,7 @@ int chip8_cycle(void)
 			}
 			
 			pc += 2;
-			drawflag = 1; // update screen
+			return 1; // screen update flag
 			break;
 			
 		case 0xE000:
@@ -462,10 +458,10 @@ int chip8_cycle(void)
 	}
 		
 	// screen update status
-	return drawflag;
+	return 0;
 }
 
-// update timers count
+// update timer counts
 void chip8_timerupdate(void)
 {
 	// update delay timer	

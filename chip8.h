@@ -38,8 +38,8 @@ void chip8_init(void);
 int chip8_load(char* rom);
 
 // emulate a single cpu cycle
-int chip8_cycle(void);
+int chip8_cycle(unsigned char debug);
 
-// update timers count
+// update timer counts
 void chip8_timerupdate(void);
 
