@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	SDL_Window *window = SDL_CreateWindow("Jos8", SDL_WINDOWPOS_UNDEFINED, 
 						 SDL_WINDOWPOS_UNDEFINED, 64*SCALE, 32*SCALE, SDL_WINDOW_OPENGL);
 	SDL_Renderer *renderer = SDL_CreateRenderer
-							(window, -1, SDL_RENDERER_ACCELERATED); 
+							(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); 
 	SDL_RenderSetScale(renderer, SCALE, SCALE); // scale SDL renderer
 	const Uint8 *state = SDL_GetKeyboardState(NULL); // SDL scankey pointer
     SDL_Event event;
@@ -81,8 +81,10 @@ int main(int argc, char *argv[])
         // process keyboard input
         for(int k = 0; k < 16; k++) key[k] = state[keyconvert[k]];
         
-        // run cpu cycle and draw if screen flag is set
-		if(chip8_cycle() == 1) render_frame(renderer);
+        // run 8 cpu cycles, update timer, and render frame at vsync
+        for(int i = 0; i < 8; i++) chip8_cycle();
+    	chip8_timerupdate();
+ 		render_frame(renderer);
 		
 		// get the loop close to 500hz
 		SDL_Delay(1); 

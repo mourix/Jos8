@@ -31,7 +31,6 @@ unsigned char screen[64][32];// screen
 unsigned char key[16]; // input
 unsigned char keyflag; // flag for input update used in FX0A
 unsigned char drawflag; // flag for screen update
-unsigned char timercount; // counter for timer clock devide
 
 // initialize all memory and registers
 void chip8_init(void)
@@ -56,8 +55,7 @@ void chip8_init(void)
 	
 	// reset timers 
 	delay_timer = 0;
-	sound_timer = 0;
-	timercount = 0; 
+	sound_timer = 0; 
 	
 	printf("CHIP-8 initialized succesfully\n");
 }
@@ -462,21 +460,22 @@ int chip8_cycle(void)
 		default:
 			printf ("pc=0x%X ERROR: unknown opcode: 0x%X\n", opcode);
 	}
+		
+	// screen update status
+	return drawflag;
+}
 
+// update timers count
+void chip8_timerupdate(void)
+{
 	// update delay timer	
-	if (delay_timer && (timercount == 7)) delay_timer--;
+	if (delay_timer) delay_timer--;
 	
 	// update sound timer
-	if (sound_timer && (timercount == 7))
+	if (sound_timer)
 	{
 		if (sound_timer == 1) printf("Beep...\a\n"); // plays OS beep
 		sound_timer--;
 	}
-		
-	// timer update for 60Hz
-	if(timercount == 7) timercount = 0;
-	else timercount++;
-	
-	// screen update status
-	return drawflag;
 }
+
