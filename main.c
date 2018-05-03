@@ -81,13 +81,14 @@ int main(int argc, char *argv[])
         // process keyboard input
         for(int k = 0; k < 16; k++) key[k] = state[keyconvert[k]];
         
-        // run 8 cpu cycles, update timer, and render frame at vsync
+        // run 8 cpu cycles
         for(int i = 0; i < 8; i++) chip8_cycle();
+        
+        // update timer
     	chip8_timerupdate();
+    	
+		// render frame at vsync
  		render_frame(renderer);
-		
-		// get the loop close to 500hz
-		SDL_Delay(1); 
 	}
 
 	// release SDL
