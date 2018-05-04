@@ -15,6 +15,7 @@ Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
 // settings
 unsigned char cowgod_shift = 1; // enable Cowgod's 8XY6/8XYE syntax
 unsigned char cowgod_loadstore = 1; // enable Cowgod's FX55/FX65 syntax
+unsigned char vertical_wrap = 0; // enable DXYN vertical wrapping syntax
 
 // global variables
 unsigned char memory[4096]; // program memory
@@ -332,8 +333,16 @@ int chip8_cycle(unsigned char debug)
 				{
 					if((spritebyte & (0x80 >> x)) >> (7 - x))
 					{
-						if(screen[(x+xs) % 64][(y+ys) % 32]) V[0xF] = 1; // collision detect
-						screen[(x+xs) % 64][(y+ys) % 32] ^= 1; // draw pixel
+						if(vertical_wrap) // wrap both horizontally and vertically
+						{
+							if(screen[(x+xs) % 64][(y+ys) % 32]) V[0xF] = 1; // collision detect
+							screen[(x+xs) % 64][(y+ys) % 32] ^= 1; // draw pixel
+						}
+						else if((y+ys) < 32) // only wrap horizontally
+						{
+							if(screen[(x+xs) % 64][y+ys]) V[0xF] = 1; // collision detect
+							screen[(x+xs) % 64][y+ys] ^= 1; // draw pixel
+						}
 					}	
 				}
 			}
