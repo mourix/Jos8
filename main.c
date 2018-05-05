@@ -67,7 +67,8 @@ int main(int argc, char *argv[])
     // setup SDL
     SDL_Init(SDL_INIT_VIDEO); 
 	SDL_Window *window = SDL_CreateWindow("Jos8", SDL_WINDOWPOS_UNDEFINED, 
-						 SDL_WINDOWPOS_UNDEFINED, 64*SCALE, 32*SCALE, SDL_WINDOW_OPENGL);
+						 SDL_WINDOWPOS_UNDEFINED, 64*SCALE, 32*SCALE,
+						 SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	SDL_Renderer *renderer = SDL_CreateRenderer
 							(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); 
 	SDL_RenderSetScale(renderer, SCALE, SCALE); // scale SDL renderer
@@ -79,15 +80,28 @@ int main(int argc, char *argv[])
     {
 		// process SDL quit button and escape key
         while(SDL_PollEvent(&event)) 
-		if(event.type == SDL_QUIT) running = false;
-		
-		// check keyboard input
-		else if(event.type == SDL_KEYDOWN) 
-		{
-			if(state[SDL_SCANCODE_ESCAPE]) running = false; // quit
-	        else if(state[SDL_SCANCODE_P]) paused ^= true; // pause
-	        else if(state[SDL_SCANCODE_O]) debug ^= true; // debug prints
+			{
+			// check for window resize
+			if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED)
+			{
+				// scale the emulator within bounds of screen
+				if(event.window.data1/64 < event.window.data2/32)
+					SDL_RenderSetScale(renderer, event.window.data1/64, event.window.data1/64); 
+				else SDL_RenderSetScale(renderer, event.window.data2/32, event.window.data2/32);
+			}
+			
+			// check keyboard input
+			else if(event.type == SDL_KEYDOWN) 
+			{
+				if(state[SDL_SCANCODE_ESCAPE]) running = false; // quit
+		        else if(state[SDL_SCANCODE_P]) paused ^= true; // pause
+		        else if(state[SDL_SCANCODE_O]) debug ^= true; // debug prints
+			}			
+			
+			// close app
+			else if(event.type == SDL_QUIT) running = false;
 		}
+
     	
     	// dont emulate while paused
         if(paused) continue; 
