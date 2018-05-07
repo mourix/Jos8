@@ -3,10 +3,12 @@ A basic CHIP-8 emulator written in C and SDL2.
 
 ## Using Jos8
 Files: Jos8.exe and SDL2.DLL
+
 Usage: Jos8 [romname]
 
 ## Licence
 GNU General Public License v3.0
+
 (c) 2018 Jos van Mourik
 
 ## Sources
