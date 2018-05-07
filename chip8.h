@@ -1,9 +1,8 @@
 /******************************************************************************
 chip8.h
 CHIP-8 cpu interpreter.
-(c) 2018 Jos van Mourik
 
-Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
+(c) 2018 Jos van Mourik
 ******************************************************************************/
 
 // extern variables to be used with SDL

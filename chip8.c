@@ -1,9 +1,8 @@
 /******************************************************************************
 chip8.c
 CHIP-8 cpu interpreter.
-(c) 2018 Jos van Mourik
 
-Based on multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter
+(c) 2018 Jos van Mourik
 ******************************************************************************/
 
 // includes
