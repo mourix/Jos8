@@ -7,14 +7,15 @@ CHIP-8 cpu interpreter.
 
 // includes
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "chip8.h"
 
 // settings
-unsigned char cowgod_shift = 1; // enable Cowgod's 8XY6/8XYE syntax
-unsigned char cowgod_loadstore = 1; // enable Cowgod's FX55/FX65 syntax
-unsigned char vertical_wrap = 0; // enable DXYN vertical wrapping syntax
+bool cowgod_shift = true; // enable Cowgod's 8XY6/8XYE syntax
+bool cowgod_loadstore = true; // enable Cowgod's FX55/FX65 syntax
+bool vertical_wrap = false; // enable DXYN vertical wrapping syntax
 
 // global variables
 unsigned char memory[4096]; // program memory
@@ -59,7 +60,7 @@ void chip8_init(void)
 }
 
 // load rom file into memory
-int chip8_load(char* rom)
+bool chip8_load(char* rom)
 {
 	// open file
 	FILE * fp = fopen(rom, "rb");
@@ -93,7 +94,7 @@ int chip8_load(char* rom)
 }
 
 // emulate a single cpu cycle
-int chip8_cycle(unsigned char debug)
+bool chip8_cycle(unsigned char debug)
 {
 	// print all registers if debug is enabled
 	if(debug)

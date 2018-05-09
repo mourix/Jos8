@@ -101,7 +101,6 @@ int main(int argc, char *argv[])
 			else if(event.type == SDL_QUIT) running = false;
 		}
 
-    	
     	// dont emulate while paused
         if(paused) continue; 
         
