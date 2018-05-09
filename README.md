@@ -1,10 +1,14 @@
 # Jos8: CHIP-8 emulator
-A basic CHIP-8 emulator written in C and SDL2.
+A basic CHIP-8 emulator written in C and SDL2. Has full rom compatibility at this point!
 
 ## Using Jos8
 Files: Jos8.exe and SDL2.DLL
 
 Usage: Jos8 [romname]
+
+Input keys: 1234 qwer asdf zxcv
+
+Commands: ESC = exit, P = pause, O = debug output
 
 ## Licence
 GNU General Public License v3.0
