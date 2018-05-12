@@ -15,7 +15,7 @@ CHIP-8 cpu interpreter.
 // settings
 bool cowgod_shift = true; // enable Cowgod's 8XY6/8XYE syntax
 bool cowgod_loadstore = true; // enable Cowgod's FX55/FX65 syntax
-bool vertical_wrap = false; // enable DXYN vertical wrapping syntax
+bool screen_wrap = false; // enable DXYN screen wrapping
 
 // global variables
 unsigned char memory[4096]; // program memory
@@ -331,18 +331,11 @@ bool chip8_cycle(unsigned char debug)
 				spritebyte = memory[I+y];
 				for(int x = 0; x < 8; x++)
 				{
-					if((spritebyte & (0x80 >> x)) >> (7 - x))
+					// check pixel value and wrap if enabled
+					if((spritebyte & (0x80 >> x)) >> (7 - x) && (screen_wrap || ((x+xs) < 64 && (y+ys) < 32)))
 					{
-						if(vertical_wrap) // wrap both horizontally and vertically
-						{
 							if(screen[(x+xs) % 64][(y+ys) % 32]) V[0xF] = 1; // collision detect
 							screen[(x+xs) % 64][(y+ys) % 32] ^= 1; // draw pixel
-						}
-						else if((y+ys) < 32) // only wrap horizontally
-						{
-							if(screen[(x+xs) % 64][y+ys]) V[0xF] = 1; // collision detect
-							screen[(x+xs) % 64][y+ys] ^= 1; // draw pixel
-						}
 					}	
 				}
 			}
