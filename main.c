@@ -12,15 +12,14 @@ Jos8: a work in progress CHIP-8 emulator using C and SDL2
 #include "chip8.h"
 #include "SDL2/SDL.h"
 
-// scaling of 64x32 CHIP-8 screen
-#define SCALE 10
 
 // global variables and settings
-bool running = false; // running state
-bool paused = false; // pause state
+float scale = 10; // scaling of 64x32 CHIP-8 screen
+bool running, paused = false; // running/pause state
 bool debug = false; // debug state
 bool screen_wrap = false; // enable DXYN screen wrapping
 bool cowgod = true; // enable Cowgod's 8XY6/8XYE+FX55/FX65 syntax
+unsigned char xoffset, yoffset = 0; // screen resize offset
 
 // SDL snancode to CHIP-8 keycode conversion
 const int keyconvert[16] = 
@@ -32,7 +31,7 @@ const int keyconvert[16] =
 };
 
 // render a full frame
-void render_frame(SDL_Renderer *renderer)
+void render_frame(SDL_Renderer *renderer, unsigned char xo, unsigned char yo)
 {
 	for(int y = 0; y < 32; y++)
 	{			
@@ -41,18 +40,19 @@ void render_frame(SDL_Renderer *renderer)
 			if(screen[x][y]) // white pixel
 			{
 				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-				SDL_RenderDrawPoint(renderer, x, y);
+				SDL_RenderDrawPoint(renderer, x+xo, y+yo);
 			}
 			else // black pixel
 			{
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-				SDL_RenderDrawPoint(renderer, x, y);
+				SDL_RenderDrawPoint(renderer, x+xo, y+yo);
 			}
 		}					
 	}
 	SDL_RenderPresent(renderer); // update screen
 }
 
+// update SDL window title
 void update_SDL_title(SDL_Window *window)
 {
 	char buf[50] = {0};
@@ -62,6 +62,22 @@ void update_SDL_title(SDL_Window *window)
 	if(screen_wrap) strcat (buf, " - screen-wrapping");
 	if(cowgod) strcat (buf, " - Cowgod-syntax");
 	SDL_SetWindowTitle(window, buf); 
+}
+
+// update SDL window scale and offset
+void update_SDL_size(SDL_Event event, SDL_Renderer *renderer)
+{
+	// scale the emulator within bounds of screen
+	if(event.window.data1/64 < event.window.data2/32) scale = event.window.data1/64;
+	else scale = event.window.data2/32;
+	
+	// center image
+	xoffset = (int)(event.window.data1 - (scale*64))/2/scale;
+	yoffset = (int)(event.window.data2 - (scale*32))/2/scale;
+	
+	// render
+	SDL_RenderSetScale(renderer, scale, scale);
+	render_frame(renderer, xoffset, yoffset);
 }
 
 // main emulator loop
@@ -81,12 +97,12 @@ int main(int argc, char *argv[])
     // setup SDL
     SDL_Init(SDL_INIT_VIDEO); 
 	SDL_Window *window = SDL_CreateWindow("Jos8", SDL_WINDOWPOS_UNDEFINED, 
-						 SDL_WINDOWPOS_UNDEFINED, 64*SCALE, 32*SCALE,
+						 SDL_WINDOWPOS_UNDEFINED, 64*scale, 32*scale,
 						 SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	update_SDL_title(window);
 	SDL_Renderer *renderer = SDL_CreateRenderer
 							(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); 
-	SDL_RenderSetScale(renderer, SCALE, SCALE); // scale SDL renderer
+	SDL_RenderSetScale(renderer, scale, scale); // scale SDL renderer
 	const Uint8 *state = SDL_GetKeyboardState(NULL); // SDL scankey pointer
     SDL_Event event;
 
@@ -98,14 +114,9 @@ int main(int argc, char *argv[])
 			{
 			// check for window resize
 			if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED)
-			{
-				// scale the emulator within bounds of screen
-				if(event.window.data1/64 < event.window.data2/32)
-					SDL_RenderSetScale(renderer, event.window.data1/64, event.window.data1/64); 
-				else SDL_RenderSetScale(renderer, event.window.data2/32, event.window.data2/32);
-			}
+ 				update_SDL_size(event, renderer);
 			
-			// check keyboard input
+			// check user input
 			else if(event.type == SDL_KEYDOWN) 
 			{
 				if(state[SDL_SCANCODE_ESCAPE]) running = false; // quit
@@ -134,7 +145,7 @@ int main(int argc, char *argv[])
     	chip8_timerupdate();
     	
 		// render frame at vsync
- 		render_frame(renderer);
+ 		render_frame(renderer, xoffset, yoffset);
 	}
 
 	// release SDL
