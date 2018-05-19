@@ -8,11 +8,19 @@ Jos8: a work in progress CHIP-8 emulator using C and SDL2
 // includes
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "chip8.h"
 #include "SDL2/SDL.h"
 
 // scaling of 64x32 CHIP-8 screen
 #define SCALE 10
+
+// global variables and settings
+bool running = false; // running state
+bool paused = false; // pause state
+bool debug = false; // debug state
+bool screen_wrap = false; // enable DXYN screen wrapping
+bool cowgod = true; // enable Cowgod's 8XY6/8XYE+FX55/FX65 syntax
 
 // SDL snancode to CHIP-8 keycode conversion
 const int keyconvert[16] = 
@@ -45,13 +53,20 @@ void render_frame(SDL_Renderer *renderer)
 	SDL_RenderPresent(renderer); // update screen
 }
 
+void update_SDL_title(SDL_Window *window)
+{
+	char buf[50] = {0};
+	strcpy(buf, "Jos8");
+	if(paused) strcat (buf, " (paused)");
+	if(debug) strcat (buf, " - debug-output");
+	if(screen_wrap) strcat (buf, " - screen-wrapping");
+	if(cowgod) strcat (buf, " - Cowgod-syntax");
+	SDL_SetWindowTitle(window, buf); 
+}
+
 // main emulator loop
 int main(int argc, char *argv[]) 
 {
-    bool running = false; // running state
-    bool paused = false; // pause state
-    bool debug = false; // debug state
-    
     // load ROM if file argument exists
 	if(argc == 2) 
 	{
@@ -68,6 +83,7 @@ int main(int argc, char *argv[])
 	SDL_Window *window = SDL_CreateWindow("Jos8", SDL_WINDOWPOS_UNDEFINED, 
 						 SDL_WINDOWPOS_UNDEFINED, 64*SCALE, 32*SCALE,
 						 SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	update_SDL_title(window);
 	SDL_Renderer *renderer = SDL_CreateRenderer
 							(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); 
 	SDL_RenderSetScale(renderer, SCALE, SCALE); // scale SDL renderer
@@ -94,7 +110,11 @@ int main(int argc, char *argv[])
 			{
 				if(state[SDL_SCANCODE_ESCAPE]) running = false; // quit
 		        else if(state[SDL_SCANCODE_P]) paused ^= true; // pause
-		        else if(state[SDL_SCANCODE_O]) debug ^= true; // debug prints
+		        else if(state[SDL_SCANCODE_F5]) chip8_init(); // reset emulation
+				else if(state[SDL_SCANCODE_F6]) screen_wrap ^= true; // screen wrapping
+		        else if(state[SDL_SCANCODE_F7]) cowgod ^= true; // Cowgod syntax
+		        else if(state[SDL_SCANCODE_F8]) debug ^= true; // debug prints
+		        update_SDL_title(window);
 			}			
 			
 			// close app
@@ -108,7 +128,7 @@ int main(int argc, char *argv[])
         for(int k = 0; k < 16; k++) key[k] = state[keyconvert[k]];
         
         // run 8 cpu cycles
-        for(int i = 0; i < 8; i++) chip8_cycle(debug);
+        for(int i = 0; i < 8; i++) chip8_cycle(debug, screen_wrap, cowgod);
         
         // update timer
     	chip8_timerupdate();

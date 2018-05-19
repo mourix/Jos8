@@ -12,11 +12,6 @@ CHIP-8 cpu interpreter.
 #include <string.h>
 #include "chip8.h"
 
-// settings
-bool cowgod_shift = true; // enable Cowgod's 8XY6/8XYE syntax
-bool cowgod_loadstore = true; // enable Cowgod's FX55/FX65 syntax
-bool screen_wrap = false; // enable DXYN screen wrapping
-
 // global variables
 unsigned char memory[4096]; // program memory
 unsigned short opcode; // current opcode
@@ -40,17 +35,13 @@ void chip8_init(void)
 	// clear input flag
 	keyflag = 16;
 	
-	// clear memory, registers and stack
+	// clear registers and stack
 	pc = 0x200;
 	memset(V, 0, sizeof(V));
 	I = 0;
 	memset(stack, 0, sizeof(stack));
 	sp = 0;
-	opcode = 0;
-	memset(memory, 0, sizeof(memory));
-	
-	// load fontset
-	for(int i = 0; i < 80; i++)	memory[i+0x50] = chip8_fontset[i];
+	opcode = 0;	
 	
 	// reset timers 
 	delay_timer = 0;
@@ -62,6 +53,10 @@ void chip8_init(void)
 // load rom file into memory
 bool chip8_load(char* rom)
 {
+	// clear memory and load fontset
+	memset(memory, 0, sizeof(memory));
+	for(int i = 0; i < 80; i++)	memory[i+0x50] = chip8_fontset[i];
+	
 	// open file
 	FILE * fp = fopen(rom, "rb");
 	
@@ -94,7 +89,7 @@ bool chip8_load(char* rom)
 }
 
 // emulate a single cpu cycle
-bool chip8_cycle(unsigned char debug)
+bool chip8_cycle(bool debug, bool screen_wrap, bool cowgod)
 {
 	// print all registers if debug is enabled
 	if(debug)
@@ -239,7 +234,7 @@ bool chip8_cycle(unsigned char debug)
 				// VF is set to the value of the least significant bit of VY before the shift.
 				case 0x0006:
 					if(debug) printf("Opcode=0x%04X: 8XY6 Vx=Vy=Vy>>1\n", opcode);
-					if(cowgod_shift)
+					if(cowgod)
 					{
 						V[0xF] = V[(opcode & 0x0F00) >> 8] & 1;
 						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] >> 1;
@@ -267,7 +262,7 @@ bool chip8_cycle(unsigned char debug)
 				// VF is set to the value of the most significant bit of VY before the shift.
 				case 0x000E:
 					if(debug) printf("Opcode=0x%04X: 8XYE Vx=Vy=Vy<<1\n", opcode);
-					if(cowgod_shift)
+					if(cowgod)
 					{
 						V[0xF]  = (V[(opcode & 0x0F00) >> 8] & 128) >> 7;
 						V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] << 1;
@@ -437,7 +432,7 @@ bool chip8_cycle(unsigned char debug)
 				case 0x0055:
 					if(debug) printf("Opcode=0x%04X: FX55 reg_dump(Vx,&I)\n", opcode);
 					for(int i = 0; i <= ((opcode & 0x0F00) >> 8); i++) memory[I+i] = V[i];
-					if(!cowgod_loadstore) I += ((opcode & 0x0F00) >> 8) + 1;
+					if(!cowgod) I += ((opcode & 0x0F00) >> 8) + 1;
 					pc += 2;
 					break;	
 								
@@ -446,7 +441,7 @@ bool chip8_cycle(unsigned char debug)
 				case 0x0065:
 					if(debug) printf("Opcode=0x%04X: FX65 reg_load(Vx,&I)\n", opcode);
 					for(int i = 0; i <= ((opcode & 0x0F00) >> 8); i++) V[i] = memory[I+i];
-					if(!cowgod_loadstore) I += ((opcode & 0x0F00) >> 8) + 1;						
+					if(!cowgod) I += ((opcode & 0x0F00) >> 8) + 1;						
 					pc += 2;
 					break;	
 								

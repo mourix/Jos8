@@ -8,7 +8,7 @@ Usage: Jos8 [romname]
 
 Input keys: 1234 qwer asdf zxcv
 
-Commands: ESC = exit, P = pause, O = debug output
+Commands: ESC=exit, P=pause, F5=reset, F6=toggle screen wrapping, F7=toggle Cowgod-syntax, F8=toggle debug output
 
 ## Licence
 GNU General Public License v3.0
